@@ -66,7 +66,7 @@ procedure Simulation is
          Put_Line("Produced product " & Product_Name(Product_Type_Number)
                   & " number "  & Integer'Image(Product_Number));
 
-         --  Store_Buffer.Take(Product_Type_Number, Product_Number);
+         Store_Buffer.Take(Product_Type_Number, Product_Number);
          Product_Number := Product_Number + 1;
       end loop;
 
@@ -133,6 +133,7 @@ procedure Simulation is
             (1, 2, 2, 2, 0));
 
       Max_Assembly_Content: array(Product_Type) of Integer;
+      Assembly_Content_Importance: array(Product_Type) of Float;
       Assembly_Number: array(Assembly_Type) of Integer
         := (1, 1, 1);
 
@@ -150,48 +151,91 @@ procedure Simulation is
          end loop;
       end Setup_Variables;
 
+      function Assembly_Content_Sum(Index: Product_Type) return Float is
+         Sum: Float := 0.0;
+      begin
+         for Z in Assembly_Type loop
+            Sum := Sum + Float(Assembly_Content(Z, Index));
+         end loop;
+
+         return Sum;
+      end Assembly_Content_Sum;
+
+      procedure Calculate_Products_Importance is
+         Sum: Float;
+      begin
+         for W in Product_Type loop
+            Sum := Assembly_Content_Sum(W) / Float(Storage_Capacity);
+            Assembly_Content_Importance(W) := Sum;
+         end loop;
+      end Calculate_Products_Importance;
+
+      procedure Remove_Most_Redundant_Product is
+         Most_Redundant_Product: Product_Type := 0;
+         Most_Product_Redundance: Float := 0.0;
+         Product_Redundance: Float := 0.0;
+      begin
+         for W in Product_Type loop
+            Product_Redundance := Float(Storage(W)) / Float(Storage_Capacity);
+            if Product_Redundance > Most_Product_Redundance then
+               Most_Redundant_Product := W;
+               Most_Product_Redundance := Product_Redundance;
+            end if;
+         end loop;
+
+         if Most_Product_Redundance > Assembly_Content_Importance(Most_Redundant_Product) then
+            Storage(Most_Redundant_Product) := Storage(Most_Redundant_Product) - 1;
+            In_Storage := In_Storage - 1;
+
+            Put_Line("Removed product " & Product_Name(Most_Redundant_Product) &
+                       " number " & Integer'Image(Most_Redundant_Product));
+         end if;
+      end Remove_Most_Redundant_Product;
+
+
       function Can_Accept(Product: Product_Type) return Boolean is
-         Free: Integer;		--  free room in the storage
+         Storage_Free_Space: Integer;
          -- how many products are for production of arbitrary assembly
          Lacking: array(Product_Type) of Integer;
          -- how much room is needed in storage to produce arbitrary assembly
          Lacking_room: Integer;
-         MP: Boolean;			--  can accept
+         Can_Accept: Boolean;
       begin
          if In_Storage >= Storage_Capacity then
             return False;
          end if;
-         -- There is free room in the storage
-         Free := Storage_Capacity - In_Storage;
-         MP := True;
+         Storage_Free_Space := Storage_Capacity - In_Storage;
+         Can_Accept := True;
 
          for W in Product_Type loop
             if Storage(W) < Max_Assembly_Content(W) then
-               MP := False;
+               Can_Accept := False;
             end if;
          end loop;
 
-         if MP then
-            return True;		--  storage has products for arbitrary
-            --  assembly
-         end if;
-
-         if Integer'Max(0, Max_Assembly_Content(Product) - Storage(Product)) > 0 then
-            -- exactly this product lacks
+         if Can_Accept then
             return True;
          end if;
 
-         Lacking_room := 1;			--  insert current product
+         if Integer'Max(0, Max_Assembly_Content(Product) - Storage(Product)) > 0 then
+            return True;
+         end if;
+
+         Lacking_room := 1;
          for W in Product_Type loop
             Lacking(W) := Integer'Max(0, Max_Assembly_Content(W) - Storage(W));
             Lacking_room := Lacking_room + Lacking(W);
          end loop;
 
-         if Free >= Lacking_room then
-            -- there is enough room in storage for arbitrary assembly
+         if Storage_Free_Space >= Lacking_room then
+            return True;
+         end if;
+
+         Remove_Most_Redundant_Product;
+
+         if Storage_Free_Space + 1 >= Lacking_room then
             return True;
          else
-            -- no room for this product
             return False;
          end if;
       end Can_Accept;
@@ -217,6 +261,7 @@ procedure Simulation is
    begin
       Put_Line("Buffer started");
       Setup_Variables;
+      Calculate_Products_Importance;
       loop
          select
             accept Take(Product: in Product_Type; Number: in Integer) do
@@ -255,9 +300,9 @@ procedure Simulation is
    end Buffer;
 
 begin
-   --  for I in 1 .. Number_Of_Products loop
-   --     Producers(I).Start(I, 10);
-   --  end loop;
+   for I in 1 .. Number_Of_Products loop
+      Producers(I).Start(I, 10);
+   end loop;
    for J in 1 .. Number_Of_Consumers loop
       Customers(J).Start(J,12);
    end loop;
