@@ -15,9 +15,9 @@ procedure Simulation is
    subtype Assembly_Type is Integer range 1 .. Number_Of_Assemblies;
    subtype Consumer_Type is Integer range 1 .. Number_Of_Consumers;
    Product_Name: constant array (Product_Type) of String(1 .. 8)
-     := ("Product1", "Product2", "Product3", "Product4", "Product5");
-   Assembly_Name: constant array (Assembly_Type) of String(1 .. 9)
-     := ("Assembly1", "Assembly2", "Assembly3");
+     := ("Dough   ", "Cheese  ", "Salami  ", "Mushroom", "Ananas  ");
+   Assembly_Name: constant array (Assembly_Type) of String(1 .. 12)
+     := ("Hawai Pizza ", "Salami Pizza", "Capricciosa ");
    package Random_Assembly is new
      Ada.Numerics.Discrete_Random(Assembly_Type);
    type My_Str is new String(1 ..256);
