@@ -66,7 +66,7 @@ procedure Simulation is
       loop
          Production := Random_Production.Random(Random_Production_Generator);
          Put_Line("P] Rozpoczeto wyrob skladnika " & Product_Name(Product_Type_Number));
-         Put_Line("P] Przewidywany czas produkcji to " & Integer'Image(Production) & " s");
+         Put_Line("   Przewidywany czas produkcji to " & Integer'Image(Production) & " s");
          delay Duration(Production);
 
          Put_Line("P] Wyprodukowano skladnik " & Product_Name(Product_Type_Number)
@@ -80,7 +80,7 @@ procedure Simulation is
                   Put_Line("P] Pomyslnie dostarczono skladnik " & Product_Name(Product_Type_Number));
                   exit;
                else
-                  Put_Line("B] odmowa przyjecia " & Product_Name(Product_Type_Number) & " poczekaj 10s");
+                  Put_Line("B] Odmowa przyjecia " & Product_Name(Product_Type_Number) & " poczekaj 10s");
                   delay Duration(10.0);
                end if;
             else
@@ -123,7 +123,7 @@ procedure Simulation is
 
          select
             delay 25.0;
-            Put_Line("K] Nie mam zamoaru dluzej czekac");
+            Put_Line("K] Nie mam zamiaru dluzej czekac");
          then abort
             loop
                Put_Line("----------------------------------------------");
